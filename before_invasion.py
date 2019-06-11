@@ -6,12 +6,18 @@ import matplotlib.pyplot as plt
 import random
 
 
-def init(q,death,n,extern=0):
-    p=t=m=c2=m2=np.zeros(n)
+TIME_LIMIT=30
+DATA=[]
+
+
+def init(p,q,death,n,extern=0):
+    t=0
+    p=np.array(p)
+    m=c2=m2=np.zeros(n)
     c=np.ones(n)
     random.seed()
     c=np.array([q*(1-q)**(n-i-1) for i in range(n)])
-    c2=np.array(extern)#外来物种扩散率，一般只考虑只有一个种群
+    c2=extern#外来物种扩散率，一般只考虑只有一个种群
     m=[death for i in range(n)]
     return n,p,t,c,m,c2
 
@@ -30,13 +36,12 @@ def before_invasion(args):
     for i in range(n):
         for j in range(n):
             if j<i:
-                para[i][j]=1+(c[j]/c[i])#int后期略去
+                para[i][j]=1+(c[j]/c[i])
             elif i==j:
                 para[i][j]=1
     para=sy.Matrix(para)
     para2=[[(1-m[i]/c[i])] for i in range(n)]#系数项矩阵
     para2=sy.Matrix(para2)
-    print(para,para2)
     result=sy.linsolve((para,para2),pi)
     result=list(list(result)[0])
     print(result)
@@ -71,5 +76,62 @@ def cut_in_line(args):
     before_invasion((n,p,t,c,m))
 
 
-def show(plt):
-    pass
+def equal(args):
+    '''
+    外来物种等位竞争共存模型
+    外来物种专一与本地物种竞争实现共存
+    '''
+    i=0
+    pex=0
+    args=args
+    while(i<TIME_LIMIT):
+        args,pex=cal(args,pex)
+        i+=1
+    show()
+
+
+def cal(args,pex):
+    n,p,t,c,m,c2=args
+    #首先找出外来物种与之竞争的本地物种k，这里假设k是竞争力最接近外来物种但小于它的本地物种
+    k=n-1
+    for i in range(n):
+        if c[i]>c2:
+            k=max(0,i-1)
+            break
+    pnext=[0 for i in range(n)]
+    for i in range(n):
+        if i<k:
+            pnext[i]=p[i]+c[i]*p[i]*(1-p[:i].sum())-m[i]*p[i]-(c[:(i-1)]*p[:(i-1)]).sum()*p[i]
+        elif i==k:
+            pnext[i]=p[i]+c[i]*p[i]*(1-p[:i].sum()-pex)-m[i]*p[i]-(c[:(i-1)]*p[:(i-1)]).sum()*p[i]
+            pexnext=pex+c[i]*pex*(1-p[:i].sum()-pex)-m[i]*pex-(c[:(i-1)]*p[:(i-1)]).sum()*pex
+        else:
+            pnext[i]=p[i]+c[i]*p[i]*(1-p[:i].sum()-pex)-m[i]*p[i]-(c[:(i-1)]*p[:(i-1)]).sum()*p[i]-c[k]*pex*p[i]
+    #检查种群分布是否有小于0的情况，如果有，变成0
+    for i in range(n):
+        if pnext[i]<0:
+            pnext[i]=0
+    save(p,pex)
+    p=np.array(pnext)
+    t+=1
+    args=n,p,t,c,m,c2
+    return args,pex
+
+
+def save(p,pex):
+    datarow=list(p)
+    datarow.append(pex)
+    DATA.append(datarow)
+
+
+def show():
+    
+    x=np.array([i for i in range(len(DATA))])
+    for i in range(len(DATA[0])):
+        y=np.array([j[i] for j in DATA])
+        print(y)
+        if i<len(DATA[0])-1:
+            plt.plot(x,y,label='种群%d'%i)
+        else:
+            plt.plot(x,y,label='入侵种群')
+    plt.show()
