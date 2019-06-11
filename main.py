@@ -11,5 +11,6 @@ if __name__=='__main__':
     绘图结果为各个种群的稳定生境斑块比例柱状分布图
     请谨慎调参，如果出现稳定生境斑块比例为负数的情况将无法绘图，结果我已打印在控制台中
     '''
-    bi.before_invasion(bi.init(0.5,0.04,4))
+    #bi.before_invasion(bi.init(0.5,0.04,4))
+    bi.cut_in_line(bi.init(0.5,0.04,4,0.7))
     #后续模型待添加

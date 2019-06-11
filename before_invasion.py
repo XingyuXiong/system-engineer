@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import random
 
 
-def init(q,death,n):
+def init(q,death,n,extern=0):
     p=t=m=c2=m2=np.zeros(n)
     c=np.ones(n)
     random.seed()
     c=np.array([q*(1-q)**(n-i-1) for i in range(n)])
-    print(c)
+    c2=np.array(extern)#外来物种扩散率，一般只考虑只有一个种群
     m=[death for i in range(n)]
-    return n,p,t,c,m,c2,m2
+    return n,p,t,c,m,c2
 
 
 def before_invasion(args):
@@ -59,8 +59,17 @@ def cut_in_line(args):
     参数与上面相同，同时方程形式也与入侵前模型相同，只是物种数为n+1
     #此时外来物种与本地物种并无区别
     '''
-    n,p,t,c,m,c2,m2=args
- 
+    n,p,t,c,m,c2=args
+    death=m[0]
+    c=list(c)
+    c.append(c2)
+    c=np.array(c)
+    c.sort()
+    n+=1
+    m=np.array([death for i in range(n)])
+    print(c)
+    before_invasion((n,p,t,c,m))
+
 
 def show(plt):
     pass
