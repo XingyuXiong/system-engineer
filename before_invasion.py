@@ -5,17 +5,15 @@ import matplotlib.pylab as pylab
 import matplotlib.pyplot as plt
 import random
 
-n=4
 
-
-def init():
+def init(q,death,n):
     p=t=m=c2=m2=np.zeros(n)
     c=np.ones(n)
     random.seed()
-    c=np.array([1,2,4,8])/16.0
+    c=np.array([q*(1-q)**(n-i-1) for i in range(n)])
     print(c)
-    m=[0.05 for i in range(n)]
-    return p,t,c,m,c2,m2
+    m=[death for i in range(n)]
+    return n,p,t,c,m,c2,m2
 
 
 def before_invasion(args):
@@ -24,8 +22,8 @@ def before_invasion(args):
     所有参数均为数组np.array，pi表示物种i占据生境斑块的比例; ci表示物种i的扩散率; mi表示物种i的灭绝率; n表示物种种数。
     直接解各个物种比例稳定值方程组，此处pi为符号数组
     '''
-    p,t,c,m=args[0:4]
-    pi=sy.symbols('p1:5')
+    n,p,t,c,m=args[0:5]
+    pi=sy.symbols('p1:%d'%(n+1))
     #将方程组分离为增广矩阵形式，即常数项单独分离开来
     #注意下面下标是错位的，从0开始
     para=[[0 for i in range(n)] for i in range(n)]#常数项矩阵
@@ -45,8 +43,10 @@ def before_invasion(args):
     X=np.arange(n)+1
     Y=np.array(result)
     plt.figure(figsize=(n,6))
-    plt.bar(X,Y,width=0.3,facecolor = 'lightskyblue',edgecolor = 'white')
-    plt.ylim(0,+1)
+    plt.bar(X,Y,width=0.30,facecolor = 'lightskyblue',edgecolor = 'white')
+    sum=np.array(result).sum()
+    print(sum)
+    plt.ylim(0,float(sum))
     plt.show()
 
 
@@ -59,5 +59,8 @@ def cut_in_line(args):
     参数与上面相同，同时方程形式也与入侵前模型相同，只是物种数为n+1
     #此时外来物种与本地物种并无区别
     '''
-    p,t,c,m,c2,m2=args
-    
+    n,p,t,c,m,c2,m2=args
+ 
+
+def show(plt):
+    pass
