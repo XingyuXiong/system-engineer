@@ -31,7 +31,7 @@ def init(p,q,death,n,extern=0):
     c=np.array([m[i]/(1-q)**(2*i+1) for i in range(n)])
     return n,p,q,t,c,m,p2
 
-#before_invasion和cut_in_line都是用来解稳定物种比例方程组，但是好像不符合change函数给出的预期
+#before_invasion和cut_in_line都是用来解稳定物种比例方程组，但是好像不符合change函数给出的预期，因此暂且搁置于此处不用
 #即论文给出的稳定比例表达式不是微分方程组真正的稳定解
 def before_invasion(args):
     '''
@@ -74,8 +74,6 @@ def cut_in_line(args):
     '''
     n,p,q,t,c,m,p2=args
     death=m[0]
-    c=list(c)
-    c.append(p2)
     c=np.array(c)
     c.sort()
     n+=1
@@ -114,9 +112,19 @@ def cal(args,k,flag):
         for i in range(n):          
             pnext[i]=p[i]+c[i]*p[i]*(1-p[:(i+1)].sum())-m[i]*p[i]-(c[:i]*p[:i]).sum()*p[i]
     if flag==1:
+        #根据论文，外来物种插队竞争模型生境斑块总量不变，由于外来物种入侵，p需要再分配，因此q也会再分配，需要重新构造扩散率等比数列
+        #为了体现入侵物种的突出地位，假定扩散率是最大的
+        for j in range(n):
+            if p[n-1-j]>pex:
+                k=min(n-1,n-j)
+                break
+        cex=c[n-1]
+        pexnext=pex+cex*pex*(1-p[:k].sum()-pex)-m[0]*pex-(c[:k]*p[:k]).sum()*pex
         for i in range(n):
-            pnext[i]=p[i]+c[i]*p[i]*(1-p[:(i+1)].sum())-m[i]*p[i]-(c[:i]*p[:i]).sum()*p[i]
-            pexnext=pex+c[i]*pex*(1-p[:i].sum())-m[i]*pex-(c[:(i-1)]*p[:(i-1)]).sum()*pex
+            if i<k:
+                pnext[i]=p[i]+c[i]*p[i]*(1-p[:(i+1)].sum())-m[i]*p[i]-(c[:i]*p[:i]).sum()*p[i]
+            else:
+                pnext[i]=p[i]+c[i]*pex*(1-p[:(i+1)].sum()-pex)-m[i]*p[i]-((c[:i]*p[:i]).sum()+cex*pex)*p[i]
     if flag==2:
         #外来物种等位竞争共存模型，外来物种专一与本地物种竞争实现共存
         #首先找出外来物种与之竞争的本地物种k，这里假设k是竞争力最接近外来物种但小于它的本地物种，物种下标从0开始
